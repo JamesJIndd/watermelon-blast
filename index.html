@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>西瓜 BLAST 序列比对平台</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --subtext: #6b7280;
+      --border: #dbe3ee;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --soft: #eef4ff;
+      --success: #0f766e;
+      --warning: #92400e;
+      --danger: #991b1b;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Microsoft YaHei", "PingFang SC", "Noto Sans SC", Arial, sans-serif;
+      background: linear-gradient(180deg, #f7faff 0%, #f3f6fb 100%);
+      color: var(--text);
+    }
+
+    .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 20px 60px;
+    }
+
+    .hero, .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .hero {
+      padding: 28px 28px 22px;
+      margin-bottom: 22px;
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 12px;
+      color: var(--primary);
+      background: var(--soft);
+      border: 1px solid #cfe0ff;
+      border-radius: 999px;
+      padding: 6px 10px;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: 30px;
+      line-height: 1.2;
+    }
+
+    .desc {
+      margin: 0;
+      color: var(--subtext);
+      font-size: 15px;
+      line-height: 1.8;
+    }
+
+    .note {
+      margin-top: 10px;
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .card {
+      padding: 24px;
+    }
+
+    .section-title {
+      font-size: 20px;
+      margin: 0 0 14px;
+    }
+
+    .hint {
+      color: var(--subtext);
+      font-size: 14px;
+      margin-bottom: 14px;
+      line-height: 1.7;
+    }
+
+    .meta-grid {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .meta-box {
+      min-width: 220px;
+      background: #fbfdff;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+
+    .meta-title {
+      font-size: 13px;
+      color: var(--subtext);
+      margin-bottom: 6px;
+    }
+
+    .meta-value {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      resize: vertical;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      font-family: Consolas, Monaco, monospace;
+      outline: none;
+      background: #fcfdff;
+    }
+
+    textarea:focus,
+    input:focus,
+    select:focus {
+      border-color: #9fc1ff;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+      outline: none;
+    }
+
+    .controls-row {
+      margin-top: 16px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .control {
+      min-width: 200px;
+    }
+
+    .control label {
+      font-size: 14px;
+      color: #374151;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .control input,
+    .control select {
+      width: 220px;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: white;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 18px;
+      align-items: center;
+    }
+
+    button {
+      border: none;
+      background: var(--primary);
+      color: white;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 15px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    button:hover {
+      background: var(--primary-hover);
+    }
+
+    .secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .secondary:hover {
+      background: #f9fbff;
+    }
+
+    .status {
+      margin-top: 14px;
+      font-size: 14px;
+      color: var(--success);
+      min-height: 22px;
+    }
+
+    .result-card {
+      margin-top: 22px;
+      background: #fbfcfe;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .result-title {
+      margin: 0 0 12px;
+      font-size: 17px;
+    }
+
+    .summary-grid {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .summary-box {
+      border-radius: 14px;
+      padding: 14px 16px;
+      min-width: 180px;
+      border: 1px solid var(--border);
+    }
+
+    .summary-label {
+      font-size: 13px;
+      color: var(--subtext);
+    }
+
+    .summary-number {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 6px;
+    }
+
+    .blue { background:#eef4ff; }
+    .green { background:#ecfdf5; border-color:#ccebdd; }
+    .yellow { background:#fffbeb; border-color:#f3df9f; }
+
+    .badge-pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .same {
+      color: #065f46;
+      background: #d1fae5;
+    }
+
+    .partial {
+      color: #92400e;
+      background: #fef3c7;
+    }
+
+    .fail {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .best-row {
+      background: #f5fbff;
+      outline: 2px solid #93c5fd;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      background: white;
+    }
+
+    th, td {
+      padding: 10px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    thead tr {
+      background: #eef4ff;
+    }
+
+    .mono {
+      font-family: Consolas, Monaco, monospace;
+    }
+
+    .mini-bar {
+      width: 160px;
+      height: 12px;
+      background: #e5e7eb;
+      border-radius: 999px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid #d1d5db;
+    }
+
+    .mini-fill {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(90deg, #60a5fa, #2563eb);
+      border-radius: 999px;
+    }
+
+    .footer {
+      margin-top: 22px;
+      color: var(--subtext);
+      font-size: 13px;
+      text-align: center;
+      line-height: 1.8;
+    }
+
+    .small-note {
+      margin-top: 10px;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 768px) {
+      .control input,
+      .control select {
+        width: 100%;
+      }
+
+      .control {
+        width: 100%;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .hero, .card {
+        padding: 18px;
+        border-radius: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <section class="hero">
+      <div class="badge">Watermelon BLAST · 中文专业版</div>
+      <h1>西瓜 BLAST 序列比对平台</h1>
+      <p class="desc">
+        本平台基于 Watermelon (97103) v2.5 Genome 数据库，支持 nucleotide against nucleotide（n 对 n）本地 BLAST 检索。
+        适用于课程展示、项目演示、基础科研筛查与序列定位分析。
+      </p>
+      <div class="note">一个认真做出来的小工具，也是一份认真准备的心意。</div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">序列输入</h2>
+      <div class="hint">
+        支持纯 DNA 序列输入，也支持 FASTA 格式。可一次输入多条 FASTA 序列进行批量检索。
+        仅允许 A、C、G、T、N。
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-box">
+          <div class="meta-title">BLAST 程序</div>
+          <div class="meta-value">blastn-short（nucleotide against nucleotide）</div>
+        </div>
+        <div class="meta-box">
+          <div class="meta-title">当前数据库</div>
+          <div class="meta-value">Watermelon (97103) v2.5 Genome</div>
+        </div>
+        <div class="meta-box">
+          <div class="meta-title">输入检测</div>
+          <div class="meta-value" id="inputInfo">尚未检测</div>
+        </div>
+      </div>
+
+      <textarea id="sequence" placeholder="可输入单条序列，例如：
+AAAACACATTTAAAGTCCAAGGACC
+
+也可输入多条 FASTA，例如：
+>seq1
+AAAACACATTTAAAGTCCAAGGACC
+>seq2
+ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
+
+      <div class="controls-row">
+        <div class="control">
+          <label for="hitFilter">命中序列显示</label>
+          <select id="hitFilter">
+            <option value="ALL">全部</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="thresholdLength">相同判定的最小一致碱基数</label>
+          <input id="thresholdLength" type="number" value="25" min="1" />
+        </div>
+
+        <div class="control">
+          <label for="thresholdIdentity">相同判定的最小相似度（%）</label>
+          <input id="thresholdIdentity" type="number" value="100" min="0" max="100" step="0.1" />
+        </div>
+
+        <div class="control">
+          <label for="sortMode">结果排序方式</label>
+          <select id="sortMode">
+            <option value="evalueAsc">E-value 从小到大</option>
+            <option value="bitscoreDesc">Bit score 从大到小</option>
+            <option value="pidentDesc">相似度从高到低</option>
+            <option value="coverageDesc">覆盖率从高到低</option>
+          </select>
+        </div>
+
+        <div class="control">
+          <label for="topHitMode">结果显示模式</label>
+          <select id="topHitMode">
+            <option value="all">显示全部结果</option>
+            <option value="top1">仅显示最佳命中（Top 1）</option>
+            <option value="topPerQuery">每条 Query 仅显示最佳命中</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <button onclick="runBlast()">开始比对</button>
+        <button class="secondary" onclick="fillExample()">填入示例序列</button>
+        <button class="secondary" onclick="clearAll()">清空内容</button>
+        <button class="secondary" onclick="downloadCSV()">下载 CSV</button>
+        <button class="secondary" onclick="downloadTXT()">下载 TXT</button>
+      </div>
+
+      <div class="small-note">
+        判定说明：当比对结果满足“相似度 ≥ 设定阈值”且“比对长度 ≥ 设定阈值”时，判定为 <strong>相同</strong>；
+        否则若相似度 ≥ 90%，判定为 <strong>部分匹配</strong>。
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="result-card">
+        <h3 class="result-title">比对结果</h3>
+        <div id="result">结果将在这里显示。</div>
+      </div>
+    </section>
+
+    <div class="footer">
+      当前版本：中文专业展示版<br />
+      数据库：Watermelon (97103) v2.5 Genome
+    </div>
+  </div>
+
+  <script>
+    let lastRows = [];
+    let lastRenderedRows = [];
+    let lastQueryLengths = {};
+    let lastProgram = '';
+    let lastDatabase = '';
+
+    function evalueToNumber(v) {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : Number.MAX_VALUE;
+    }
+
+    function parseInputSummary(text) {
+      const raw = (text || '').trim();
+      if (!raw) return '尚未检测';
+
+      if (raw.includes('>')) {
+        const blocks = raw.split(/^>/m).filter(Boolean);
+        let count = 0;
+        let lengths = [];
+
+        for (const block of blocks) {
+          const lines = block.split('\n');
+          const seq = lines.slice(1).join('').replace(/\s+/g, '').trim();
+          if (seq) {
+            count += 1;
+            lengths.push(seq.length);
+          }
+        }
+
+        return `检测到 FASTA 输入，共 ${count} 条序列；长度：${lengths.join(', ')} bp`;
+      }
+
+      const seq = raw.replace(/\s+/g, '');
+      return `检测到纯序列输入，共 1 条；长度：${seq.length} bp`;
+    }
+
+    function updateInputInfo() {
+      const text = document.getElementById('sequence').value;
+      document.getElementById('inputInfo').textContent = parseInputSummary(text);
+    }
+
+    function getCoverage(row) {
+      const qlen = lastQueryLengths[row.qseqid] || 0;
+      if (!qlen) return 0;
+      return (row.length / qlen) * 100;
+    }
+
+    function getMatchLabel(row, minLength, minIdentity) {
+      if (row.pident >= minIdentity && row.length >= minLength) {
+        return { text: '相同', cls: 'same' };
+      }
+      if (row.pident >= 90) {
+        return { text: '部分匹配', cls: 'partial' };
+      }
+      return { text: '未达阈值', cls: 'fail' };
+    }
+
+    function sortRows(rows, sortMode) {
+      const copied = [...rows];
+      copied.sort((a, b) => {
+        if (sortMode === 'bitscoreDesc') {
+          return b.bitscore - a.bitscore || evalueToNumber(a.evalue) - evalueToNumber(b.evalue);
+        }
+        if (sortMode === 'pidentDesc') {
+          return b.pident - a.pident || b.length - a.length || evalueToNumber(a.evalue) - evalueToNumber(b.evalue);
+        }
+        if (sortMode === 'coverageDesc') {
+          return getCoverage(b) - getCoverage(a) || evalueToNumber(a.evalue) - evalueToNumber(b.evalue);
+        }
+        return evalueToNumber(a.evalue) - evalueToNumber(b.evalue) || b.bitscore - a.bitscore;
+      });
+      return copied;
+    }
+
+    function filterRows(rows) {
+      const hitFilter = document.getElementById('hitFilter').value;
+      const topHitMode = document.getElementById('topHitMode').value;
+      const sortMode = document.getElementById('sortMode').value;
+
+      let result = [...rows];
+
+      if (hitFilter !== 'ALL') {
+        result = result.filter(r => r.sseqid === hitFilter);
+      }
+
+      result = sortRows(result, sortMode);
+
+      if (topHitMode === 'top1') {
+        result = result.slice(0, 1);
+      } else if (topHitMode === 'topPerQuery') {
+        const seen = new Set();
+        result = result.filter(r => {
+          if (seen.has(r.qseqid)) return false;
+          seen.add(r.qseqid);
+          return true;
+        });
+      }
+
+      return result;
+    }
+
+    function populateHitFilter(rows) {
+      const select = document.getElementById('hitFilter');
+      const current = select.value || 'ALL';
+
+      const hits = Array.from(new Set(rows.map(r => r.sseqid))).sort();
+      select.innerHTML = '<option value="ALL">全部</option>' +
+        hits.map(h => `<option value="${h}">${h}</option>`).join('');
+
+      if (hits.includes(current) || current === 'ALL') {
+        select.value = current;
+      } else {
+        select.value = 'ALL';
+      }
+    }
+
+    function renderSummary(rows, minLength, minIdentity) {
+      const sameCount = rows.filter(r => r.pident >= minIdentity && r.length >= minLength).length;
+      const partialCount = rows.filter(r => !(r.pident >= minIdentity && r.length >= minLength) && r.pident >= 90).length;
+      const querySet = new Set(rows.map(r => r.qseqid));
+
+      return `
+        <div class="summary-grid">
+          <div class="summary-box blue">
+            <div class="summary-label">总命中数</div>
+            <div class="summary-number">${rows.length}</div>
+          </div>
+          <div class="summary-box green">
+            <div class="summary-label">判定为相同</div>
+            <div class="summary-number">${sameCount}</div>
+          </div>
+          <div class="summary-box yellow">
+            <div class="summary-label">部分匹配</div>
+            <div class="summary-number">${partialCount}</div>
+          </div>
+          <div class="summary-box blue">
+            <div class="summary-label">涉及 Query 数</div>
+            <div class="summary-number">${querySet.size}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function makePositionBar(row) {
+      const qlen = lastQueryLengths[row.qseqid] || row.length || 1;
+      const start = Math.min(row.qstart, row.qend);
+      const end = Math.max(row.qstart, row.qend);
+      const left = ((start - 1) / qlen) * 100;
+      const width = ((end - start + 1) / qlen) * 100;
+
+      return `
+        <div>
+          <div class="mini-bar">
+            <div class="mini-fill" style="left:${left}%; width:${width}%;"></div>
+          </div>
+          <div style="font-size:12px; color:#6b7280; margin-top:4px;">
+            Q:${row.qstart}-${row.qend}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderTable(rows, minLength, minIdentity) {
+      if (!rows.length) {
+        return '<div style="color:#6b7280;">未找到命中结果。</div>';
+      }
+
+      const bestKey = `${rows[0].qseqid}__${rows[0].sseqid}__${rows[0].evalue}__${rows[0].bitscore}`;
+
+      let html = renderSummary(rows, minLength, minIdentity);
+      html += '<div class="table-wrap"><table><thead><tr>' +
+        '<th>判定</th>' +
+        '<th>最佳</th>' +
+        '<th>Query</th>' +
+        '<th>命中序列</th>' +
+        '<th>相似度(%)</th>' +
+        '<th>比对长度</th>' +
+        '<th>覆盖率(%)</th>' +
+        '<th>E-value</th>' +
+        '<th>Bit score</th>' +
+        '<th>Subject 起点</th>' +
+        '<th>Subject 终点</th>' +
+        '<th>位置图</th>' +
+        '</tr></thead><tbody>';
+
+      for (const row of rows) {
+        const label = getMatchLabel(row, minLength, minIdentity);
+        const coverage = getCoverage(row);
+        const rowKey = `${row.qseqid}__${row.sseqid}__${row.evalue}__${row.bitscore}`;
+        const isBest = rowKey === bestKey;
+
+        html += `
+          <tr class="${isBest ? 'best-row' : ''}">
+            <td><span class="badge-pill ${label.cls}">${label.text}</span></td>
+            <td>${isBest ? '⭐' : ''}</td>
+            <td>${row.qseqid}</td>
+            <td><strong>${row.sseqid}</strong></td>
+            <td>${row.pident.toFixed(3)}</td>
+            <td>${row.length}</td>
+            <td>${coverage.toFixed(1)}</td>
+            <td>${row.evalue}</td>
+            <td>${row.bitscore}</td>
+            <td>${row.sstart}</td>
+            <td>${row.send}</td>
+            <td>${makePositionBar(row)}</td>
+          </tr>
+        `;
+      }
+
+      html += '</tbody></table></div>';
+      return html;
+    }
+
+    async function runBlast() {
+      const sequence = document.getElementById('sequence').value.trim();
+      const status = document.getElementById('status');
+      const result = document.getElementById('result');
+      const minLength = parseInt(document.getElementById('thresholdLength').value || '25', 10);
+      const minIdentity = parseFloat(document.getElementById('thresholdIdentity').value || '100');
+
+      if (!sequence) {
+        status.textContent = '请输入序列后再进行比对。';
+        result.innerHTML = '结果将在这里显示。';
+        return;
+      }
+
+      status.textContent = '正在运行 BLAST，请稍候...';
+      result.innerHTML = '';
+      updateInputInfo();
+
+      try {
+        const res = await fetch('/blast', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sequence })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          result.innerHTML = `<div style="color:#b91c1c;">${data.error || '请求失败。'}</div>`;
+          status.textContent = '比对失败。';
+          return;
+        }
+
+        lastRows = data.rows || [];
+        lastQueryLengths = data.queryLengths || {};
+        lastProgram = data.program || '';
+        lastDatabase = data.database || '';
+
+        populateHitFilter(lastRows);
+        rerenderCurrent();
+
+        const queryCount = data.queryCount || 0;
+        status.textContent = `比对完成，共解析 ${queryCount} 条输入序列，返回 ${lastRenderedRows.length} 条命中记录。`;
+      } catch (err) {
+        status.textContent = '连接失败。';
+        result.innerHTML = '<div style="color:#b91c1c;">无法连接到服务器，请检查服务是否正常运行。</div>';
+      }
+    }
+
+    function rerenderCurrent() {
+      const minLength = parseInt(document.getElementById('thresholdLength').value || '25', 10);
+      const minIdentity = parseFloat(document.getElementById('thresholdIdentity').value || '100');
+      const rows = filterRows(lastRows);
+      lastRenderedRows = rows;
+
+      const result = document.getElementById('result');
+      result.innerHTML = renderTable(rows, minLength, minIdentity);
+
+      const status = document.getElementById('status');
+      if (lastRows.length) {
+        status.textContent = `筛选后共返回 ${rows.length} 条命中记录。`;
+      }
+    }
+
+    function fillExample() {
+      document.getElementById('sequence').value =
+`>seq1
+AAAACACATTTAAAGTCCAAGGACC
+>seq2
+ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA`;
+      updateInputInfo();
+      document.getElementById('status').textContent = '已填入示例序列。';
+    }
+
+    function clearAll() {
+      document.getElementById('sequence').value = '';
+      document.getElementById('status').textContent = '';
+      document.getElementById('result').innerHTML = '结果将在这里显示。';
+      document.getElementById('inputInfo').textContent = '尚未检测';
+      document.getElementById('hitFilter').innerHTML = '<option value="ALL">全部</option>';
+      lastRows = [];
+      lastRenderedRows = [];
+      lastQueryLengths = {};
+    }
+
+    function downloadBlob(content, filename, type) {
+      const blob = new Blob([content], { type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function downloadCSV() {
+      if (!lastRenderedRows.length) return;
+
+      const header = [
+        '判定','Query','命中序列','相似度(%)','比对长度','覆盖率(%)',
+        'E-value','Bit score','Subject起点','Subject终点','Qstart','Qend'
+      ];
+
+      const minLength = parseInt(document.getElementById('thresholdLength').value || '25', 10);
+      const minIdentity = parseFloat(document.getElementById('thresholdIdentity').value || '100');
+
+      const lines = [header.join(',')];
+
+      for (const row of lastRenderedRows) {
+        const label = getMatchLabel(row, minLength, minIdentity).text;
+        const coverage = getCoverage(row).toFixed(1);
+        lines.push([
+          label, row.qseqid, row.sseqid, row.pident.toFixed(3), row.length, coverage,
+          row.evalue, row.bitscore, row.sstart, row.send, row.qstart, row.qend
+        ].join(','));
+      }
+
+      downloadBlob(lines.join('\n'), 'blast_results.csv', 'text/csv;charset=utf-8;');
+    }
+
+    function downloadTXT() {
+      if (!lastRenderedRows.length) return;
+
+      const minLength = parseInt(document.getElementById('thresholdLength').value || '25', 10);
+      const minIdentity = parseFloat(document.getElementById('thresholdIdentity').value || '100');
+
+      const lines = [];
+      lines.push('西瓜 BLAST 序列比对结果');
+      lines.push(`数据库: ${lastDatabase}`);
+      lines.push(`程序: ${lastProgram}`);
+      lines.push('');
+
+      for (const row of lastRenderedRows) {
+        const label = getMatchLabel(row, minLength, minIdentity).text;
+        const coverage = getCoverage(row).toFixed(1);
+        lines.push(
+          `判定=${label}\tQuery=${row.qseqid}\t命中序列=${row.sseqid}\t相似度=${row.pident.toFixed(3)}\t比对长度=${row.length}\t覆盖率=${coverage}%\tE-value=${row.evalue}\tBit score=${row.bitscore}\tSstart=${row.sstart}\tSend=${row.send}`
+        );
+      }
+
+      downloadBlob(lines.join('\n'), 'blast_results.txt', 'text/plain;charset=utf-8;');
+    }
+
+    document.getElementById('sequence').addEventListener('input', updateInputInfo);
+    document.getElementById('hitFilter').addEventListener('change', rerenderCurrent);
+    document.getElementById('sortMode').addEventListener('change', rerenderCurrent);
+    document.getElementById('topHitMode').addEventListener('change', rerenderCurrent);
+    document.getElementById('thresholdLength').addEventListener('input', rerenderCurrent);
+    document.getElementById('thresholdIdentity').addEventListener('input', rerenderCurrent);
+
+    updateInputInfo();
+  </script>
+</body>
+</html>

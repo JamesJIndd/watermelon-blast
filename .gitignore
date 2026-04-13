@@ -1,0 +1,8 @@
+node_modules/
+blast-data/
+*.fa
+*.fna
+*.gz
+*.nsq
+*.nin
+*.nhr
