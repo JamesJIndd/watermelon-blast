@@ -422,6 +422,11 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
         </div>
 
         <div class="control">
+          <label for="maxEvalue">最大 E-value</label>
+  	  <input id="maxEvalue" type="number" value="0.05" min="0" step="0.000001" />
+	</div>
+
+        <div class="control">
           <label for="sortMode">结果排序方式</label>
           <select id="sortMode">
             <option value="evalueAsc">E-value 从小到大</option>
@@ -478,6 +483,14 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
     function evalueToNumber(v) {
       const n = Number(v);
       return Number.isFinite(n) ? n : Number.MAX_VALUE;
+    }
+
+    function passesThreshold(row, minLength, minIdentity, maxEvalue) {
+      return (
+        row.length >= minLength &&
+        row.pident >= minIdentity &&
+        evalueToNumber(row.evalue) <= maxEvalue
+      );
     }
 
     function parseInputSummary(text) {
@@ -547,12 +560,31 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
       const hitFilter = document.getElementById('hitFilter').value;
       const topHitMode = document.getElementById('topHitMode').value;
       const sortMode = document.getElementById('sortMode').value;
+      const minLength = parseInt(document.getElementById('thresholdLength').value || '20', 10);
+      const minIdentity = parseFloat(document.getElementById('thresholdIdentity').value || '100');
+      const maxEvalue = parseFloat(document.getElementById('maxEvalue').value || '0.05');
 
       let result = [...rows];
 
+      // 先搜全体，再过滤低质量命中
+      result = result.filter(r => passesThreshold(r, minLength, minIdentity, maxEvalue));
+
+      // 如果用户额外指定只看某条染色体，再做二次筛选
       if (hitFilter !== 'ALL') {
         result = result.filter(r => r.sseqid === hitFilter);
       }
+
+      result = sortRows(result, sortMode);
+
+      // 同一条染色体只保留最优一条，避免同染色体多段重复
+      const bestPerSubject = new Map();
+      for (const row of result) {
+        const key = row.sseqid;
+        if (!bestPerSubject.has(key)) {
+          bestPerSubject.set(key, row);
+        }
+      }
+      result = Array.from(bestPerSubject.values());
 
       result = sortRows(result, sortMode);
 
@@ -585,24 +617,27 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
       }
     }
 
-    function renderSummary(rows, minLength, minIdentity) {
-      const sameCount = rows.filter(r => r.pident >= minIdentity && r.length >= minLength).length;
-      const partialCount = rows.filter(r => !(r.pident >= minIdentity && r.length >= minLength) && r.pident >= 90).length;
+    function renderSummary(rows, minLength, minIdentity, maxEvalue) {
+      const validCount = rows.filter(r => passesThreshold(r, minLength, minIdentity, maxEvalue)).length;
       const querySet = new Set(rows.map(r => r.qseqid));
+
+      let matchType = '不匹配';
+      if (rows.length === 1) matchType = '单匹配';
+      if (rows.length >= 2) matchType = '多匹配';
 
       return `
         <div class="summary-grid">
           <div class="summary-box blue">
-            <div class="summary-label">总命中数</div>
+            <div class="summary-label">过滤后命中数</div>
             <div class="summary-number">${rows.length}</div>
           </div>
           <div class="summary-box green">
-            <div class="summary-label">判定为相同</div>
-            <div class="summary-number">${sameCount}</div>
+            <div class="summary-label">有效匹配数</div>
+            <div class="summary-number">${validCount}</div>
           </div>
           <div class="summary-box yellow">
-            <div class="summary-label">部分匹配</div>
-            <div class="summary-number">${partialCount}</div>
+            <div class="summary-label">匹配类型</div>
+            <div class="summary-number">${matchType}</div>
           </div>
           <div class="summary-box blue">
             <div class="summary-label">涉及 Query 数</div>
@@ -631,14 +666,14 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
       `;
     }
 
-    function renderTable(rows, minLength, minIdentity) {
+    function renderTable(rows, minLength, minIdentity, maxEvalue) {
       if (!rows.length) {
         return '<div style="color:#6b7280;">未找到命中结果。</div>';
       }
 
       const bestKey = `${rows[0].qseqid}__${rows[0].sseqid}__${rows[0].evalue}__${rows[0].bitscore}`;
 
-      let html = renderSummary(rows, minLength, minIdentity);
+      let html = renderSummary(rows, minLength, minIdentity, maxEvalue);
       html += '<div class="table-wrap"><table><thead><tr>' +
         '<th>判定</th>' +
         '<th>最佳</th>' +
@@ -655,7 +690,7 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
         '</tr></thead><tbody>';
 
       for (const row of rows) {
-        const label = getMatchLabel(row, minLength, minIdentity);
+        const label = getMatchLabel(row, minLength, minIdentity, maxEvalue);
         const coverage = getCoverage(row);
         const rowKey = `${row.qseqid}__${row.sseqid}__${row.evalue}__${row.bitscore}`;
         const isBest = rowKey === bestKey;
@@ -731,17 +766,22 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA"></textarea>
     }
 
     function rerenderCurrent() {
-      const minLength = parseInt(document.getElementById('thresholdLength').value || '25', 10);
+      const minLength = parseInt(document.getElementById('thresholdLength').value || '20', 10);
       const minIdentity = parseFloat(document.getElementById('thresholdIdentity').value || '100');
+      const maxEvalue = parseFloat(document.getElementById('maxEvalue').value || '0.05');
+
       const rows = filterRows(lastRows);
       lastRenderedRows = rows;
 
       const result = document.getElementById('result');
-      result.innerHTML = renderTable(rows, minLength, minIdentity);
+      result.innerHTML = renderTable(rows, minLength, minIdentity, maxEvalue);
 
       const status = document.getElementById('status');
       if (lastRows.length) {
-        status.textContent = `筛选后共返回 ${rows.length} 条命中记录。`;
+        let matchType = '不匹配';
+        if (rows.length === 1) matchType = '单匹配';
+        if (rows.length >= 2) matchType = '多匹配';
+        status.textContent = `过滤后共返回 ${rows.length} 条命中记录，当前判定为：${matchType}。`;
       }
     }
 
@@ -830,7 +870,8 @@ ATGCGTACGTAGCTAGCTAGCTAGCTAGCTA`;
     document.getElementById('topHitMode').addEventListener('change', rerenderCurrent);
     document.getElementById('thresholdLength').addEventListener('input', rerenderCurrent);
     document.getElementById('thresholdIdentity').addEventListener('input', rerenderCurrent);
-
+    document.getElementById('maxEvalue').addEventListener('input', rerenderCurrent);
+    
     updateInputInfo();
   </script>
 </body>
